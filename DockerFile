@@ -1,14 +1,20 @@
-# Use an official OpenJDK runtime as a parent image
-FROM openjdk:17-jdk-slim
+# Use a base image that has git and Java/Maven installed
+FROM maven:3-eclipse-temurin-17 as builder
+# Clone your GitHub repository (replace with your repository URL)
+RUN git clone -b master https://github.com/Ashfazafar/javacode.git /build
+# Set the working directory to the cloned repo
+WORKDIR /build
+RUN mvn -T clean install
 
-# Set the working directory in the container
+
+# Use OpenJDK 17 runtime (slim version for reduced size)
+FROM openjdk:17-jdk-slim as building
 WORKDIR /app
-
-# Copy the JAR file into the container at /app
-COPY target/app.jar /app/helloService.jar
+# Copy the JAR file from the build stage
+COPY --from=builder /build/target/restService.jar .
 
 # Expose port 8080 to access the application
 EXPOSE 8080
 
 # Command to run the JAR file when the container starts
-CMD ["java", "-jar", "helloService.jar"]
+CMD ["java", "-jar", "restService.jar"]
